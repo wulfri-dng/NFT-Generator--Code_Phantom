@@ -2,9 +2,64 @@ const { layerConfigurations, collectionConfigurations } = require('./config')
 const fs = require("fs");
 const basePath = process.cwd();
 
-const generateImageData = (layers) => {
-    layers.layersOrder
+const dnaList = []
+const imageDataList = []
+
+//--------- Image data and DNA ---------
+
+const getfileDetails = (fileNames) => {
+    const fileDetails = []
+    for(let i = 0; i < fileNames.length; i++) {
+        let nameWithoutExtension = fileNames[i].slice(0, -4);
+        fileDetails.push({
+            fileName: fileNames[i],
+            index: i,
+            name: nameWithoutExtension.split('#')[0],
+            weight: nameWithoutExtension.split('#')[1]
+        })
+    }
+    return fileDetails
 }
+
+const isValidDna = (dna) => {
+    for(let i = 0; i < dnaList.length; i++) {
+        if(dnaList[i] === dna) {
+            console.log("NOTE : Duplicate DNA found")
+            return false
+        }
+    }
+    return true
+}
+
+const generateImageData = (layerDetails) => {
+    const selectedInnerElements = []
+    const selectedInnerElementsFileNames = []
+    for(let i = 0; i < layerDetails.elements.length; i++) {
+        let totalWeight = 0
+        let innerElement;
+        const fileDetails = getfileDetails(layerDetails.elements[i].innerElements)
+        fileDetails.map(file => totalWeight += parseInt(file.weight))
+        const random = Math.floor(Math.random() * totalWeight)
+        let temp = parseInt(fileDetails[0].weight)
+        for(let j = 0; j < fileDetails.length; j++) {
+            if(random <= temp) {
+                innerElement = fileDetails[j]
+                break
+            }
+            temp += parseInt(fileDetails[j+1].weight)
+        }
+        selectedInnerElements.push(innerElement)
+    }
+    selectedInnerElements.map(element => selectedInnerElementsFileNames.push(element.index))
+    let dna = selectedInnerElementsFileNames.join("-")
+    console.log(dna)
+    return {
+        imageData: selectedInnerElements,
+        dna: dna
+    }
+}
+
+//--------------------------------------
 
 //------------ Setup Layers ------------
 
@@ -64,16 +119,40 @@ const generateNfts = () => {
 
     const layerObject = createLayerObject();
 
-    while(currentImage < collectionCount) {
-        for(let i = 0; i < layerObject.length; i++) {
-            for(let j = currentImage; j <= layerObject[i].growEditionSizeTo; j++) {
-                console.log(`Edition: ${j}`)
-                console.log(`Image number: ${imageIndexes[j-1]}`)
-                generateImageData(layerConfigurations[i])
-                currentImage++;
+    console.time('Execution Time');
+    let isRun = true
+    while(currentImage < collectionCount && isRun) {
+        for(let i = 0; i < layerObject.length && isRun; i++) {
+            for(let j = currentImage; j <= layerObject[i].growEditionSizeTo && isRun; j++) {
+                console.log(`\nEdition: ${j}`)
+                console.log(`Image number: ${imageIndexes[j-1]}\n`)
+
+                let loops = 0
+                while(true) {
+                    const data = generateImageData(layerObject[i])
+                    if (isValidDna(data.dna)) {
+                        dnaList.push(data.dna)
+                        imageDataList.push(data)
+                        currentImage++;
+                        break
+                    }
+                    loops ++
+                    console.log(loops)
+                    if(loops == 100) {
+                        isRun = false
+                        break
+                    }
+                }
             }
         }
     }
+    dnaList.map(dna => console.log(dna))
+    // imageDataList.map(imageData => console.log(imageData))
+    if(!isRun) {
+        console.log("Need more attributes! Cannot generate anymore")
+        console.log(`${imageDataList.length} variations created`)
+    }
+    console.timeEnd('Execution Time');
 }
 
 module.exports = {generateNfts}
