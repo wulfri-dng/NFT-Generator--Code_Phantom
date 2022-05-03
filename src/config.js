@@ -1,10 +1,10 @@
 const collectionConfigurations = {
-  shuffle: true
+  shuffle: false
 }
 
 const layerConfigurations = [
   {
-    growEditionSizeTo: 1000,
+    growEditionSizeTo: 10,
     layersOrder: [
       { name: "Background" },
       { name: "Eyeball" },
