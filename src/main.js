@@ -123,54 +123,75 @@ const loadCurrentImage = async (file) => {
             loadedLayersArray[loadedLayersIndex] = loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`);
             resolve()
         })
-    } catch(err) {
+    } catch (err) {
         console.log(err)
     }
 }
 
-const generateImage = (data, index, currentImage) => {
+const getImagePromises = (data) => {
+    const promises = []
+
+    data.imageData.map((file) => {
+        promises.push(loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`))
+    })
+
+    return Promise.all(promises)
+}
+
+const generateImage = async (data, index, currentImage) => {
     const canvas = createCanvas(1000, 1000)
     const context = canvas.getContext('2d')
-    let buffer;
+
     // console.log(data)
     let time = 0
     const loadedLayersArray = []
     data.imageData.map((file, loadedLayersIndex) => {
         // const loadedLayer = loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`)
 
-        loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`).then(image => {
-            console.time('draw Time');
-            context.drawImage(image, 0, 0, 1000, 1000)
-            canvas.toBuffer((err, buff) => {
-                console.time('Spent Time');
-                if(err) throw console.error();
-                buffer = buff
-                if(loadedLayersIndex == data.imageData.length-1) {
-                    saveImage()
-                }
-                // saveImage()
-                console.timeEnd('Spent Time');
-            })
-           console.timeEnd('draw Time');
-
-        // loadedLayersArray[loadedLayersIndex] = loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`)
-
         // loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`).then(image => {
+        //     console.time('draw Time');
         //     context.drawImage(image, 0, 0, 1000, 1000)
-        //     // const buffer = canvas.toBuffer('image/png')
-        //     canvas.toBuffer((err, buffer) => {
-        //         console.time('buff Time');
-        //         if (err) throw err
-        //         fs.writeFileSync(`./images/${index}.png`, buffer)
-        //         console.timeEnd('buff Time');
+        //     canvas.toBuffer((err, buff) => {
+        //         console.time('Spent Time');
+        //         if(err) throw console.error();
+        //         if(loadedLayersIndex == data.imageData.length-1) {
+        //             console.log("Image saving")
+        //             saveImage(buff)
+        //         }
+        //         // saveImage()
+        //         console.timeEnd('Spent Time');
         //     })
-        //     console.log(`${currentImage}s generating`)
-        })
-        function saveImage() {
-            fs.writeFileSync(`./images/${index}.png`, buffer)
-        }
+        //    console.timeEnd('draw Time');
+
+        // // loadedLayersArray[loadedLayersIndex] = loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`)
+        // })
+        // function saveImage(buff) {
+        //     fs.writeFileSync(`./images/${index}.png`, buff)
+        // }
     })
-    
+
+    const imagePromises = await getImagePromises(data)
+
+    imagePromises.map((image, loadedLayersIndex) => {
+        console.log(image)
+        context.drawImage(image, 0, 0, 1000, 1000)
+        canvas.toBuffer((err, buff) => {
+            console.time('Spent Time');
+            if (err) throw console.error();
+            if (loadedLayersIndex == imagePromises.length - 1) {
+                console.log("Image saving")
+                saveImage(buff)
+            }
+            // saveImage()
+            console.timeEnd('Spent Time');
+        })
+    })
+
+    function saveImage(buff) {
+        fs.writeFileSync(`./images/${index}.png`, buff)
+    }
+
+
     // console.log(loadedLayersArray)
 }
 
