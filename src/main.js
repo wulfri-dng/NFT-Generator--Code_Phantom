@@ -6,9 +6,12 @@ const { createCanvas, loadImage } = require('canvas');
 const { resolve } = require('path');
 let canvas = createCanvas(2048, 2048)
 let context = canvas.getContext('2d')
+const nReadlines = require('n-readlines');
 
 const dnaList = []
 const imageDataList = []
+
+
 
 //--------- Image data and DNA ---------
 
@@ -172,7 +175,6 @@ const generateNfts = async () => {
                     const data = generateImageData(layerObject[i], imageIndexes[j - 1])
 
                     var dataContent = JSON.stringify(data);
-                    console.log(dataContent);
                     // fs.writeFile(`${basePath}/src/data.json`, dataContent, 'utf8', function (err) {
                     //     if (err) {
                     //         console.log("An error occured while writing JSON Object to File.");
@@ -213,8 +215,21 @@ const generateNfts = async () => {
         `]\n`,
         { flag: "a+" }
     )
+
+    //------------------ Read saved data from .json file --------------------
+    const broadbandLines = new nReadlines(`${basePath}/src/data.json`);
+    let line;
+    let lineNumber = 1;
+    
+    while (line = broadbandLines.next()) {
+        let dataLine = JSON.stringify(line.toString('ascii'));
+        console.log(dataLine)
+        // console.log(`Line ${lineNumber} has: ${line.toString('ascii')}`);
+        lineNumber++;
+    }
+
     // dnaList.map(dna => console.log(dna))
-    imageDataList.map(imageData => console.log(imageData))
+    // imageDataList.map(imageData => console.log(imageData))
     if (!isRun) {
         console.log("Need more attributes! Cannot generate anymore")
         console.log(`${imageDataList.length} variations created`)
