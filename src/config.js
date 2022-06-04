@@ -4,14 +4,18 @@ const collectionConfigurations = {
 
 const layerConfigurations = [
   {
-    growEditionSizeTo: 10,
+    growEditionSizeTo: 100,
     layersOrder: [
-      { name: "Background" },
-      { name: "Eyeball" },
-      { name: "Eye color" },
-      { name: "Iris" },
-      { name: "Shine" },
-      { name: "Top lid" },
+      { name: "Base" },
+      { name: "Clothing" },
+      { name: "Necklace" },
+      { name: "Earring" },
+      { name: "Hair" },
+      { name: "Hat" },
+      { name: "Mouth" },
+      { name: "Eye" },
+      { name: "Glasses" },
+      { name: "Special Accessory" },
     ],
   },
 ];

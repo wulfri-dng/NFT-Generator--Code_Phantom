@@ -4,7 +4,8 @@ const basePath = process.cwd();
 const sha1 = require('../node_modules/sha1')
 const { createCanvas, loadImage } = require('canvas');
 const { resolve } = require('path');
-
+let canvas = createCanvas(2048, 2048)
+let context = canvas.getContext('2d')
 
 const dnaList = []
 const imageDataList = []
@@ -116,88 +117,37 @@ const generateIndexes = (count, shuffle) => {
     return array;
 }
 
-const loadCurrentImage = async (file) => {
-    loadedLayersArray = []
-    try {
-        return new Promise(async (resolve) => {
-            loadedLayersArray[loadedLayersIndex] = loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`);
-            resolve()
-        })
-    } catch (err) {
-        console.log(err)
-    }
-}
+//-------------------------------------
 
-const getImagePromises = (data) => {
+const getImagePromises = (data, index) => {
+    console.time('getImagePromises');
     const promises = []
-
-    data.imageData.map((file) => {
+    data.imageData.map((file, index) => {
         promises.push(loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`))
     })
-
+    console.timeEnd('getImagePromises');
     return Promise.all(promises)
 }
 
+const drawSelectedImage = (imagePromises, index) => {
+    imagePromises.forEach((image, loadedLayersIndex) => {
+        context.drawImage(image, 0, 0, 2048, 2048)
+    })
+    fs.writeFileSync(`./images/${index}.png`, canvas.toBuffer())
+}
+
 const generateImage = async (data, index, currentImage) => {
-    const canvas = createCanvas(1000, 1000)
-    const context = canvas.getContext('2d')
-
-    // console.log(data)
-    let time = 0
-    const loadedLayersArray = []
-    data.imageData.map((file, loadedLayersIndex) => {
-        // const loadedLayer = loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`)
-
-        // loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`).then(image => {
-        //     console.time('draw Time');
-        //     context.drawImage(image, 0, 0, 1000, 1000)
-        //     canvas.toBuffer((err, buff) => {
-        //         console.time('Spent Time');
-        //         if(err) throw console.error();
-        //         if(loadedLayersIndex == data.imageData.length-1) {
-        //             console.log("Image saving")
-        //             saveImage(buff)
-        //         }
-        //         // saveImage()
-        //         console.timeEnd('Spent Time');
-        //     })
-        //    console.timeEnd('draw Time');
-
-        // // loadedLayersArray[loadedLayersIndex] = loadImage(`${basePath}/layers/${file.elementName}/${file.fileName}`)
-        // })
-        // function saveImage(buff) {
-        //     fs.writeFileSync(`./images/${index}.png`, buff)
-        // }
-    })
-
-    const imagePromises = await getImagePromises(data)
-
-    imagePromises.map((image, loadedLayersIndex) => {
-        console.log(image)
-        context.drawImage(image, 0, 0, 1000, 1000)
-        canvas.toBuffer((err, buff) => {
-            console.time('Spent Time');
-            if (err) throw console.error();
-            if (loadedLayersIndex == imagePromises.length - 1) {
-                console.log("Image saving")
-                saveImage(buff)
-            }
-            // saveImage()
-            console.timeEnd('Spent Time');
-        })
-    })
-
-    function saveImage(buff) {
-        fs.writeFileSync(`./images/${index}.png`, buff)
-    }
-
-
-    // console.log(loadedLayersArray)
+    console.log("start")
+    context.clearRect(0, 0, 2048, 2048);
+    console.time("drawSelectedImage")
+    drawSelectedImage((await getImagePromises(data, index)), index)
+    console.timeEnd("drawSelectedImage")
+    console.log("end")
 }
 
 //-------------------------------------
 
-const generateNfts = () => {
+const generateNfts = async () => {
     const collectionCount = layerConfigurations[layerConfigurations.length - 1].growEditionSizeTo;
     let imageIndexes = generateIndexes(collectionCount, collectionConfigurations.shuffle);
     let currentImage = 1;
@@ -225,7 +175,7 @@ const generateNfts = () => {
                         // )
                         // const data1 = data.imageData.splice(0, 500)
                         // const data2 = data.imageData.splice(500, data.imageData.length)
-                        generateImage(data, imageIndexes[j - 1], currentImage)
+                        await generateImage(data, imageIndexes[j - 1], currentImage)
                         // generateImage(data, imageIndexes[imageIndexes.length - j], collectionCount - currentImage)
                         currentImage++;
                         break
