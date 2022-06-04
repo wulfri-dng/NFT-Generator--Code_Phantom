@@ -4,7 +4,7 @@ const collectionConfigurations = {
 
 const layerConfigurations = [
   {
-    growEditionSizeTo: 10000,
+    growEditionSizeTo: 10,
     layersOrder: [
       { name: "Base" },
       { name: "Eye" },

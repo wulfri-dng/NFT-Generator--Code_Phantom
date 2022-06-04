@@ -7,11 +7,8 @@ const { resolve } = require('path');
 let canvas = createCanvas(2048, 2048)
 let context = canvas.getContext('2d')
 const nReadlines = require('n-readlines');
-
+const lineReader = require('line-reader');
 const dnaList = []
-const imageDataList = []
-
-
 
 //--------- Image data and DNA ---------
 
@@ -121,7 +118,7 @@ const generateIndexes = (count, shuffle) => {
     return array;
 }
 
-//-------------------------------------
+//-----------------------------------------------------------------------
 
 const getImagePromises = (data, index) => {
     console.time('getImagePromises');
@@ -140,29 +137,25 @@ const drawSelectedImage = (imagePromises, index) => {
     fs.writeFileSync(`./images/${index}.png`, canvas.toBuffer())
 }
 
-const generateImage = async (data, index, currentImage) => {
+const generateImage = (data) => {
     console.log("start")
     context.clearRect(0, 0, 2048, 2048);
     console.time("drawSelectedImage")
-    drawSelectedImage((await getImagePromises(data, index)), index)
+    getImagePromises(data, data.index).then((promises) => {
+        drawSelectedImage(promises, data.index)
+    })
     console.timeEnd("drawSelectedImage")
     console.log("end")
 }
 
-//-------------------------------------
-fs.writeFileSync(
-    `${basePath}/src/data.json`,
-    `[\n`,
-    { flag: "a+" }
-)
-const generateNfts = async () => {
+//-----------------------------------------------------------------------
+
+const generateNfts = () => {
     const collectionCount = layerConfigurations[layerConfigurations.length - 1].growEditionSizeTo;
     let imageIndexes = generateIndexes(collectionCount, collectionConfigurations.shuffle);
     let currentImage = 1;
-
     const layerObject = createLayerObject();
 
-    console.time('Execution Time');
     let isRun = true
     while (currentImage < collectionCount && isRun) {
         for (let i = 0; i < layerObject.length && isRun; i++) {
@@ -173,30 +166,14 @@ const generateNfts = async () => {
                 let loops = 0
                 while (true) {
                     const data = generateImageData(layerObject[i], imageIndexes[j - 1])
-
-                    var dataContent = JSON.stringify(data);
-                    // fs.writeFile(`${basePath}/src/data.json`, dataContent, 'utf8', function (err) {
-                    //     if (err) {
-                    //         console.log("An error occured while writing JSON Object to File.");
-                    //         return console.log(err);
-                    //     }
-                    //     console.log("JSON file has been saved.");
-                    // });
-
                     if (isValidDna(data.dna)) {
                         dnaList.push(data.dna)
-                        imageDataList.push(data)
-                        fs.writeFileSync(
+                        var dataContent = JSON.stringify(data);
+                        fs.writeFileSync( // Save image to the json file
                             `${basePath}/src/data.json`,
-                            `${dataContent},\n`,
+                            `${dataContent}\n`,
                             { flag: "a+" }
                         )
-                        // const data1 = data.imageData.splice(0, 500)
-                        // const data2 = data.imageData.splice(500, data.imageData.length)
-
-                        // await generateImage(data, imageIndexes[j - 1], currentImage)
-
-                        // generateImage(data, imageIndexes[imageIndexes.length - j], collectionCount - currentImage)
                         currentImage++;
                         break
                     }
@@ -210,31 +187,24 @@ const generateNfts = async () => {
             }
         }
     }
-    fs.writeFileSync(
-        `${basePath}/src/data.json`,
-        `]\n`,
-        { flag: "a+" }
-    )
 
-    //------------------ Read saved data from .json file --------------------
-    const broadbandLines = new nReadlines(`${basePath}/src/data.json`);
-    let line;
-    let lineNumber = 1;
-    
-    while (line = broadbandLines.next()) {
-        let dataLine = JSON.stringify(line.toString('ascii'));
-        console.log(dataLine)
-        // console.log(`Line ${lineNumber} has: ${line.toString('ascii')}`);
-        lineNumber++;
-    }
+    readDataAndGenerate()
 
-    // dnaList.map(dna => console.log(dna))
-    // imageDataList.map(imageData => console.log(imageData))
     if (!isRun) {
         console.log("Need more attributes! Cannot generate anymore")
-        console.log(`${imageDataList.length} variations created`)
+        console.log(`${currentImage} variations created`)
     }
-    console.timeEnd('Execution Time');
 }
+
+//------------------ Read saved data from .json file --------------------
+
+const readDataAndGenerate = () => {
+    lineReader.eachLine(`${basePath}/src/data.json`, (line, last) => {
+        const lineData = JSON.parse(line)
+        generateImage(lineData)
+    });
+}
+
+//-----------------------------------------------------------------------
 
 module.exports = { generateNfts }
