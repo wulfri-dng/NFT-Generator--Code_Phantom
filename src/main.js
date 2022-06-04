@@ -37,7 +37,7 @@ const isValidDna = (dna) => {
     return true
 }
 
-const generateImageData = (layerDetails) => {
+const generateImageData = (layerDetails, index) => {
     const selectedInnerElements = []
     const selectedInnerElementsFileNames = []
     for (let i = 0; i < layerDetails.elements.length; i++) {
@@ -62,7 +62,8 @@ const generateImageData = (layerDetails) => {
     console.log(dna)
     return {
         imageData: selectedInnerElements,
-        dna: dna
+        dna: dna,
+        index: index
     }
 }
 
@@ -146,7 +147,11 @@ const generateImage = async (data, index, currentImage) => {
 }
 
 //-------------------------------------
-
+fs.writeFileSync(
+    `${basePath}/src/data.json`,
+    `[\n`,
+    { flag: "a+" }
+)
 const generateNfts = async () => {
     const collectionCount = layerConfigurations[layerConfigurations.length - 1].growEditionSizeTo;
     let imageIndexes = generateIndexes(collectionCount, collectionConfigurations.shuffle);
@@ -164,18 +169,31 @@ const generateNfts = async () => {
 
                 let loops = 0
                 while (true) {
-                    const data = generateImageData(layerObject[i])
+                    const data = generateImageData(layerObject[i], imageIndexes[j - 1])
+
+                    var dataContent = JSON.stringify(data);
+                    console.log(dataContent);
+                    // fs.writeFile(`${basePath}/src/data.json`, dataContent, 'utf8', function (err) {
+                    //     if (err) {
+                    //         console.log("An error occured while writing JSON Object to File.");
+                    //         return console.log(err);
+                    //     }
+                    //     console.log("JSON file has been saved.");
+                    // });
+
                     if (isValidDna(data.dna)) {
                         dnaList.push(data.dna)
                         imageDataList.push(data)
-                        // fs.writeFileSync(
-                        //     `${basePath}/src/data.json`,
-                        //     `fileName: ${data.imageData.map(singleFile => (singleFile.fileName))}\n`,
-                        //     { flag: "a+" }
-                        // )
+                        fs.writeFileSync(
+                            `${basePath}/src/data.json`,
+                            `${dataContent},\n`,
+                            { flag: "a+" }
+                        )
                         // const data1 = data.imageData.splice(0, 500)
                         // const data2 = data.imageData.splice(500, data.imageData.length)
-                        await generateImage(data, imageIndexes[j - 1], currentImage)
+
+                        // await generateImage(data, imageIndexes[j - 1], currentImage)
+
                         // generateImage(data, imageIndexes[imageIndexes.length - j], collectionCount - currentImage)
                         currentImage++;
                         break
@@ -190,8 +208,13 @@ const generateNfts = async () => {
             }
         }
     }
-    dnaList.map(dna => console.log(dna))
-    // imageDataList.map(imageData => console.log(imageData))
+    fs.writeFileSync(
+        `${basePath}/src/data.json`,
+        `]\n`,
+        { flag: "a+" }
+    )
+    // dnaList.map(dna => console.log(dna))
+    imageDataList.map(imageData => console.log(imageData))
     if (!isRun) {
         console.log("Need more attributes! Cannot generate anymore")
         console.log(`${imageDataList.length} variations created`)

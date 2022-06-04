@@ -1,19 +1,19 @@
 const collectionConfigurations = {
-  shuffle: false
+  shuffle: true
 }
 
 const layerConfigurations = [
   {
-    growEditionSizeTo: 100,
+    growEditionSizeTo: 10000,
     layersOrder: [
       { name: "Base" },
+      { name: "Eye" },
       { name: "Clothing" },
       { name: "Necklace" },
       { name: "Earring" },
       { name: "Hair" },
       { name: "Hat" },
       { name: "Mouth" },
-      { name: "Eye" },
       { name: "Glasses" },
       { name: "Special Accessory" },
     ],
