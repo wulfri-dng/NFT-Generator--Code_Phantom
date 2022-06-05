@@ -5,6 +5,9 @@
   "main": "index.js",
   "scripts": {
     "generate-collection": "node index.js",
+    "print-collection-data": "node utils/print-collection-data.js",
+    "generate-collection-from-seperate-files": "node utils/generate-collection-from-seperate-files.js",
+    "generate-collection-from-data-file": "node utils/generate-collection-from-data-file.js",
     "generate-folders": "node utils/generate-folders.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

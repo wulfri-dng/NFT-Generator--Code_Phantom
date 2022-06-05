@@ -150,13 +150,14 @@ const generateImage = (data) => {
 
 //-----------------------------------------------------------------------
 
-const generateNfts = () => {
+const generateNftData = () => {
     const collectionCount = layerConfigurations[layerConfigurations.length - 1].growEditionSizeTo;
     let imageIndexes = generateIndexes(collectionCount, collectionConfigurations.shuffle);
     let currentImage = 1;
     const layerObject = createLayerObject();
 
     let isRun = true
+    let currentSaveFileNumb = 1;
     while (currentImage < collectionCount && isRun) {
         for (let i = 0; i < layerObject.length && isRun; i++) {
             for (let j = currentImage; j <= layerObject[i].growEditionSizeTo && isRun; j++) {
@@ -167,19 +168,37 @@ const generateNfts = () => {
                 while (true) {
                     const data = generateImageData(layerObject[i], imageIndexes[j - 1])
                     if (isValidDna(data.dna)) {
-                        dnaList.push(data.dna)
+                        dnaList.push(data.dna);
                         var dataContent = JSON.stringify(data);
+
+                        // for (let i = 0; i < layerConfigurations.devideSaveFilesTo.length; i++) {
+                        //     while (nftCount <= layerConfigurations.devideSaveFilesTo[i]) {
+
+                        //     }
+                        // }
                         fs.writeFileSync( // Save image to the json file
                             `${basePath}/src/data.json`,
                             `${dataContent}\n`,
                             { flag: "a+" }
                         )
+
+                        if (collectionConfigurations.devideSaveFilesTo.length > 0) {
+                            fs.writeFileSync( // Save image to the json file
+                                `${basePath}/output/generatedData/dataFile-${currentSaveFileNumb}.json`,
+                                `${dataContent}\n`,
+                                { flag: "a+" }
+                            )
+                            if (currentImage >= collectionConfigurations.devideSaveFilesTo[currentSaveFileNumb - 1]) {
+                                currentSaveFileNumb++;
+                            }
+                        }
+
                         currentImage++;
                         break
                     }
                     loops++
                     console.log(loops)
-                    if (loops == 100) {
+                    if (loops == 6000) {
                         isRun = false
                         break
                     }
@@ -187,18 +206,25 @@ const generateNfts = () => {
             }
         }
     }
-
-    readDataAndGenerate()
-
     if (!isRun) {
         console.log("Need more attributes! Cannot generate anymore")
-        console.log(`${currentImage} variations created`)
+        console.log(`${currentImage - 1} variations created`)
     }
 }
 
 //------------------ Read saved data from .json file --------------------
 
-const readDataAndGenerate = () => {
+const readDataFromSeperateFilesAndGenerate = () => {
+    const savedFiles = fs.readdirSync(`${collectionConfigurations.fileSaveLocation}`);
+    for (let i = 0; i < savedFiles.length; i++) {
+        lineReader.eachLine(`${collectionConfigurations.fileSaveLocation}${savedFiles[i]}`, (line, last) => {
+            const lineData = JSON.parse(line)
+            generateImage(lineData)
+        });
+    }
+}
+
+const readDataFromDataFileAndGenerate = () => {
     lineReader.eachLine(`${basePath}/src/data.json`, (line, last) => {
         const lineData = JSON.parse(line)
         generateImage(lineData)
@@ -207,4 +233,4 @@ const readDataAndGenerate = () => {
 
 //-----------------------------------------------------------------------
 
-module.exports = { generateNfts }
+module.exports = { generateNftData, readDataFromSeperateFilesAndGenerate, readDataFromDataFileAndGenerate }

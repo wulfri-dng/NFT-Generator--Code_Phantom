@@ -1,10 +1,14 @@
+const basePath = process.cwd();
+
 const collectionConfigurations = {
-  shuffle: true
+  shuffle: false,
+  fileSaveLocation: `${basePath}/output/generatedData/`,
+  devideSaveFilesTo: [100, 200, 300]
 }
 
 const layerConfigurations = [
   {
-    growEditionSizeTo: 10,
+    growEditionSizeTo: 300,
     layersOrder: [
       { name: "Base" },
       { name: "Eye" },

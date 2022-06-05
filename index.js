@@ -1,3 +1,3 @@
-const { generateNfts } = require('./src/main')
-
-generateNfts()
+const { generateNftData, readDataAndGenerate } = require('./src/main')
+generateNftData()
+readDataAndGenerate()
