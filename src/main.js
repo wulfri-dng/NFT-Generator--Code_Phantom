@@ -1,12 +1,10 @@
-const { layerConfigurations, collectionConfigurations } = require('./config')
+const { layerConfigurations, collectionConfigurations, metadataConfigurations } = require('./config')
 const fs = require("fs");
 const basePath = process.cwd();
 const sha1 = require('../node_modules/sha1')
 const { createCanvas, loadImage } = require('canvas');
-const { resolve } = require('path');
-let canvas = createCanvas(2048, 2048)
+let canvas = createCanvas(collectionConfigurations.pixelSize, collectionConfigurations.pixelSize)
 let context = canvas.getContext('2d')
-const nReadlines = require('n-readlines');
 const lineReader = require('line-reader');
 const dnaList = []
 
@@ -132,14 +130,14 @@ const getImagePromises = (data, index) => {
 
 const drawSelectedImage = (imagePromises, index) => {
     imagePromises.forEach((image, loadedLayersIndex) => {
-        context.drawImage(image, 0, 0, 2048, 2048)
+        context.drawImage(image, 0, 0, collectionConfigurations.pixelSize, collectionConfigurations.pixelSize)
     })
     fs.writeFileSync(`./images/${index}.png`, canvas.toBuffer())
 }
 
 const generateImage = (data) => {
     console.log("start")
-    context.clearRect(0, 0, 2048, 2048);
+    context.clearRect(0, 0, collectionConfigurations.pixelSize, collectionConfigurations.pixelSize);
     console.time("drawSelectedImage")
     getImagePromises(data, data.index).then((promises) => {
         drawSelectedImage(promises, data.index)
@@ -170,12 +168,6 @@ const generateNftData = () => {
                     if (isValidDna(data.dna)) {
                         dnaList.push(data.dna);
                         var dataContent = JSON.stringify(data);
-
-                        // for (let i = 0; i < layerConfigurations.devideSaveFilesTo.length; i++) {
-                        //     while (nftCount <= layerConfigurations.devideSaveFilesTo[i]) {
-
-                        //     }
-                        // }
                         fs.writeFileSync( // Save image to the json file
                             `${basePath}/src/data.json`,
                             `${dataContent}\n`,
@@ -231,6 +223,80 @@ const readDataFromDataFileAndGenerate = () => {
     });
 }
 
+//------------ Generate metadata files from data.json file --------------
+
+const generateMetaData = () => {
+    let allInOneStarted = false;
+    lineReader.eachLine(`${basePath}/src/data.json`, (line, last) => {
+        const lineData = JSON.parse(line)
+        const fileSavePath = [
+            {
+                type: "allInOneFile",
+                path: `${basePath}/output/metadata/metadata.json`
+            },
+            {
+                type: "singleFile",
+                path: `${basePath}/output/metadata/${lineData.index}.json`
+            }
+        ]
+        fileSavePath.map(location => {
+            if (!allInOneStarted && location.type == "allInOneFile") {
+                fs.writeFileSync(
+                    location.path,
+                    `[`
+                    ,
+                    { flag: "a+" }
+                )
+                allInOneStarted = true;
+            }
+            fs.writeFileSync(
+                location.path,
+                `{\n  "name": "${metadataConfigurations.name}",\n  "description": "${metadataConfigurations.description}",\n  "image": "${metadataConfigurations.image}/${lineData.index}",\n  "external_link": "${metadataConfigurations.external_link}",\n  "attributes": [\n`,
+                { flag: "a+" }
+            )
+            lineData.imageData.map((element, index) => {
+                let objectClosingComma = ",";
+                if (lineData.imageData.length - 1 == index) {
+                    objectClosingComma = ""
+                }
+                fs.writeFileSync(
+                    location.path,
+                    `    {\n      "trait_type": "${element.elementName}",\n      "value": "${element.name}"\n    }${objectClosingComma}\n`
+                    ,
+                    { flag: "a+" }
+                )
+            })
+            fs.writeFileSync(
+                location.path,
+                `  ],\n  "compiler": "${metadataConfigurations.compiler}"\n}`
+                ,
+                { flag: "a+" }
+            )
+            if (location.type == "allInOneFile") {
+                if (last) {
+                    fs.writeFileSync(
+                        location.path,
+                        `]`
+                        ,
+                        { flag: "a+" }
+                    )
+                } else {
+                    fs.writeFileSync(
+                        location.path,
+                        `,\n`
+                        ,
+                        { flag: "a+" }
+                    )
+                }
+            }
+        })
+
+        console.log(`index ${lineData.index} metadata saved`)
+    });
+
+
+}
+
 //-----------------------------------------------------------------------
 
-module.exports = { generateNftData, readDataFromSeperateFilesAndGenerate, readDataFromDataFileAndGenerate }
+module.exports = { generateNftData, readDataFromSeperateFilesAndGenerate, readDataFromDataFileAndGenerate, generateMetaData }
