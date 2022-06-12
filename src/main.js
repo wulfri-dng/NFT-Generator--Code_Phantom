@@ -226,75 +226,37 @@ const readDataFromDataFileAndGenerate = () => {
 //------------ Generate metadata files from data.json file --------------
 
 const generateMetaData = () => {
-    let allInOneStarted = false;
+    const metadataArray = [];
+
     lineReader.eachLine(`${basePath}/src/data.json`, (line, last) => {
         const lineData = JSON.parse(line)
-        const fileSavePath = [
-            {
-                type: "allInOneFile",
-                path: `${basePath}/output/metadata/metadata.json`
-            },
-            {
-                type: "singleFile",
-                path: `${basePath}/output/metadata/${lineData.index}.json`
-            }
-        ]
-        fileSavePath.map(location => {
-            if (!allInOneStarted && location.type == "allInOneFile") {
-                fs.writeFileSync(
-                    location.path,
-                    `[`
-                    ,
-                    { flag: "a+" }
-                )
-                allInOneStarted = true;
-            }
-            fs.writeFileSync(
-                location.path,
-                `{\n  "name": "${metadataConfigurations.name}",\n  "description": "${metadataConfigurations.description}",\n  "image": "${metadataConfigurations.image}/${lineData.index}",\n  "external_link": "${metadataConfigurations.external_link}",\n  "attributes": [\n`,
-                { flag: "a+" }
-            )
-            lineData.imageData.map((element, index) => {
-                let objectClosingComma = ",";
-                if (lineData.imageData.length - 1 == index) {
-                    objectClosingComma = ""
+
+        const metadata = {
+            name: metadataConfigurations.name,
+            description: metadataConfigurations.description,
+            image: `${metadataConfigurations.image}/${lineData.index}`,
+            external_link: metadataConfigurations.external_link,
+            attributes: []
+        }
+
+        lineData.imageData.map((element) => {
+            metadata.attributes.push(
+                {
+                    trait_type: element.elementName,
+                    value: element.name,
                 }
-                fs.writeFileSync(
-                    location.path,
-                    `    {\n      "trait_type": "${element.elementName}",\n      "value": "${element.name}"\n    }${objectClosingComma}\n`
-                    ,
-                    { flag: "a+" }
-                )
-            })
-            fs.writeFileSync(
-                location.path,
-                `  ],\n  "compiler": "${metadataConfigurations.compiler}"\n}`
-                ,
-                { flag: "a+" }
             )
-            if (location.type == "allInOneFile") {
-                if (last) {
-                    fs.writeFileSync(
-                        location.path,
-                        `]`
-                        ,
-                        { flag: "a+" }
-                    )
-                } else {
-                    fs.writeFileSync(
-                        location.path,
-                        `,\n`
-                        ,
-                        { flag: "a+" }
-                    )
-                }
-            }
         })
+        metadataArray.push(metadata)
 
+        fs.writeFileSync(`${basePath}/output/metadata/${lineData.index}.json`, JSON.stringify(metadata, null, 2))
         console.log(`index ${lineData.index} metadata saved`)
+
+        if (last) {
+            fs.writeFileSync(`${basePath}/output/metadata/metadata.json`, JSON.stringify(metadataArray, null, 2))
+            console.log(`metadata.json generated`)
+        }
     });
-
-
 }
 
 //-----------------------------------------------------------------------
