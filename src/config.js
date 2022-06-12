@@ -1,15 +1,15 @@
 const basePath = process.cwd();
 
 const collectionConfigurations = {
-  shuffle: false,
+  shuffle: true,
   pixelSize: 2000,
   fileSaveLocation: `${basePath}/output/generatedData/`,
-  devideSaveFilesTo: [1667, 3334, 5001, 6668, 8335, 10000]
+  devideSaveFilesTo: []
 }
 
 const layerConfigurations = [
   {
-    growEditionSizeTo: 10000,
+    growEditionSizeTo: 15,
     layersOrder: [
       { name: "1_Backgrounds" },
       { name: "2_Base charachter" },
@@ -30,14 +30,38 @@ const layerConfigurations = [
   },
 ];
 
+const currentNetworks = {
+  eth: "eth",
+  sol: "sol"
+}
+
 const metadataConfigurations = {
+  // Select correct network
+  network: currentNetworks.sol,
+
   name: "Enter collection name",
   description: "Add collection description here",
   image: "ipfs://replaceThisWithURI",
   external_link: "https://exampleLink/1",
   animation_url: "A URL to a multi-media attachment for the item(GLTF, GLB, WEBM, MP4, M4V, OGV, and OGG, MP3, WAV, and OGA)",
   youtube_url: "A URL to a YouTube video",
-  compiler: "Code Phantom Generate Engine"
+  compiler: "Code Phantom Generate Engine",
+
+  // Below configs are unique to SOLANA network
+  symbol: "unique symbol (DNG)",
+  seller_fee_basis_points: 500, // This is the % of royalties the creator of the NFT will receive on each purchase. (500 equates to 5%).
+  creators: [ // You can add multiple wallets and sum of share must be 100
+    {
+      address: "wallet address 1",
+      share: 20
+    },
+    {
+      address: "wallet address 2",
+      share: 80
+    },
+  ],
+  category: "image",
+  type: "image/png"
 }
 
 module.exports = { layerConfigurations, collectionConfigurations, metadataConfigurations }

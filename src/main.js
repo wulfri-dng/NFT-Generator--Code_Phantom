@@ -231,12 +231,50 @@ const generateMetaData = () => {
     lineReader.eachLine(`${basePath}/src/data.json`, (line, last) => {
         const lineData = JSON.parse(line)
 
-        const metadata = {
-            name: metadataConfigurations.name,
+        let metadata = {
+            name: `${metadataConfigurations.name} #${lineData.index}`,
             description: metadataConfigurations.description,
+        }
+
+        if (metadataConfigurations.network == "sol") {
+            metadata = {
+                ...metadata,
+                symbol: metadataConfigurations.symbol,
+                seller_fee_basis_points: metadataConfigurations.seller_fee_basis_points
+            }
+        }
+
+        metadata = {
+            ...metadata,
             image: `${metadataConfigurations.image}/${lineData.index}`,
             external_link: metadataConfigurations.external_link,
+            edition: lineData.index,
+            date: Date.now(),
+            compiler: metadataConfigurations.compiler,
             attributes: []
+        }
+
+        if (metadataConfigurations.network == "sol") {
+            metadata = {
+                ...metadata,
+                category: metadataConfigurations.category,
+                properties: {
+                    files: [
+                        {
+                            uri: `${lineData.index}.png`,
+                            type: metadataConfigurations.type
+                        }
+                    ],
+                    creators: []
+                }
+            }
+
+            for (let i = 0; i < metadataConfigurations.creators.length; i++) {
+                metadata.properties.creators.push({
+                    address: metadataConfigurations.creators[i].address,
+                    share: metadataConfigurations.creators[i].share
+                })
+            }
         }
 
         lineData.imageData.map((element) => {
